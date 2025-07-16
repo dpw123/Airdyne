@@ -1,0 +1,18 @@
+
+
+UI.h
+ - draws main menu
+ - start-button, chooses next screen
+
+
+ UI_Ride
+ UI_RFT
+ UI_EMOM
+  - specific screens for workout mode
+
+UI_Update
+ - called to update the display
+ - stores active fields to update
+
+TrpComputer
+ -  
