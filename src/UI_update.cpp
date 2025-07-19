@@ -19,6 +19,8 @@ void update_time( long seconds) {
   int ss = (seconds - 60*60*hh) - 60*mm;
   // Serial.printf("Updating time at %p", Time_Value);
   lv_label_set_text_fmt(  Time_Value , "%02d:%02d:%02d",hh,mm,ss );
+  if (get_bike_mode()==TC::TABATA)   lv_bar_set_value(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ), (int32_t)seconds * 10, LV_ANIM_OFF);
+
 }
 
 void update_button_label(char new_text[30]) {
@@ -55,9 +57,11 @@ void update_cals( float cals) {
 void update_round(int rc, int tr) {
     lv_label_set_text_fmt(  lv_obj_get_child( get_UI_value_object(UI::ROUND), 1 ) , "%d of %d", rc, tr );
 }
+
 void update_countdown(int secs) {
+    lv_obj_remove_flag(get_UI_value_object(UI::countdown), LV_OBJ_FLAG_HIDDEN);   
     lv_label_set_text_fmt(   get_UI_value_object(UI::countdown) , "%d", secs );
-    Serial.println(secs);
+    // Serial.println(secs);
 }
 
 void update_pb_target(int target, int divisor, TC::TARGET_TYPE target_type) {

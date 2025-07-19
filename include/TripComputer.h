@@ -11,7 +11,8 @@ enum TIMER_DATA {
     CALS,
     RPM,
     ProgBar,
-    ROUNDS
+    ROUNDS,
+    REST_TIME
     };
 enum TARGET_TYPE {
     TARGET_TIME,

@@ -15,6 +15,7 @@ lv_obj_t * SpinTime ;
 lv_obj_t * SpinRnds ;
 lv_obj_t * btnmTargetType ;
 lv_obj_t * btnmMode;
+lv_obj_t * SpinRestTime;
 
 // screens
 lv_obj_t *scr_mainmenu;
@@ -107,6 +108,7 @@ void lv_create_MainMenu_2(void)
   int TargetDist = get_target(TC::DIST);
   int TargetRounds = get_target(TC::ROUNDS);
   int TargetRoundTime = get_target(TC::TIME);
+  int TargetRestTime = get_target(TC::REST_TIME);
 
   scr_mainmenu = lv_obj_create(NULL);
 
@@ -128,7 +130,7 @@ void lv_create_MainMenu_2(void)
   lv_style_set_border_side(&style_btn, LV_BORDER_SIDE_INTERNAL);
   lv_style_set_radius(&style_btn, 0);
 
-  static const char * btnm_map[] = {"Just Ride", "FT", "EMOM", "Death By", "" };
+  static const char * btnm_map[] = {"Just Ride", "FT", "EMOM", "Tabata", "Death By", "" };
   lv_obj_t * btnmMode = lv_buttonmatrix_create(scr_mainmenu);
   lv_buttonmatrix_set_map(btnmMode, btnm_map);
   lv_obj_add_style(btnmMode, &style_bg, 0);
@@ -148,15 +150,17 @@ void lv_create_MainMenu_2(void)
    int tp = 28;
    int ht = 35;
    int gp = 8;
-  SpinCals = create_spinbox(scr_mainmenu,"", 10, tp,3,TargetCals);
-  SpinDist = create_spinbox(scr_mainmenu,"", 10, tp+(ht+gp),5,TargetDist);
-  SpinTime = create_spinbox(scr_mainmenu,"Time (s)", 10, tp+2*(ht+gp),3,TargetRoundTime);
-  SpinRnds = create_spinbox(scr_mainmenu,"Rounds", 10, tp+3*(ht+gp),2,TargetRounds);
+  SpinCals = create_spinbox(scr_mainmenu,"", 10, tp+2*(ht+gp),3,TargetCals);
+  SpinDist = create_spinbox(scr_mainmenu,"", 10, tp+3*(ht+gp),5,TargetDist);
+  SpinTime = create_spinbox(scr_mainmenu,"Time (s)", 10, tp+1*(ht+gp),3,TargetRoundTime);
+  SpinRestTime = create_spinbox(scr_mainmenu,"Rest (s)", 10, tp+2*(ht+gp),3,TargetRestTime);  // overlaps with target distance, only used for tabata
+  SpinRnds = create_spinbox(scr_mainmenu,"Rounds", 10, tp+0*(ht+gp),2,TargetRounds);
   
   lv_obj_add_flag(SpinCals, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(SpinDist, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(SpinTime, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(SpinRnds, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(SpinRestTime, LV_OBJ_FLAG_HIDDEN);
 
   // target type selector
   static const char * btnm_map2[] = {"KCal","\n", "Metres", "" };
@@ -166,7 +170,7 @@ void lv_create_MainMenu_2(void)
   lv_obj_add_style(btnmTargetType, &style_btn, LV_PART_ITEMS);
   
   lv_obj_set_size(btnmTargetType, 80, 78);
-  lv_obj_set_pos(btnmTargetType, 20, 38);
+  lv_obj_set_pos(btnmTargetType, 20, tp+2*(ht+gp)+10);
   lv_obj_add_flag(btnmTargetType, LV_OBJ_FLAG_HIDDEN);
   
   lv_buttonmatrix_set_button_ctrl_all(btnmTargetType, LV_BUTTONMATRIX_CTRL_CHECKABLE);
@@ -305,6 +309,11 @@ void lv_load_timer()
     lv_obj_remove_flag(get_UI_value_object(UI::ROUND), LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(get_UI_value_object(UI::ProgBar), LV_OBJ_FLAG_HIDDEN);
   }
+  if (bm == TC::TABATA)
+  {
+    lv_obj_remove_flag(get_UI_value_object(UI::ROUND), LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(get_UI_value_object(UI::ProgBar), LV_OBJ_FLAG_HIDDEN);
+  }
   if (bm == TC::DEATH_BY)
   {
     set_target(TC::ROUNDS, 999);
@@ -316,6 +325,7 @@ void lv_load_timer()
   lv_obj_t *  PB = get_UI_value_object(UI::ProgBar);
   lv_obj_t *  Progress_bar = lv_obj_get_child(PB,0);
   lv_obj_t *  Target_Label = lv_obj_get_child(PB,1);
+  if (bm != TC::TABATA) {
   switch (get_target_type())
   {
   case TC::CALS:
@@ -335,6 +345,16 @@ void lv_load_timer()
     break;
   }
   }
+}
+else {
+    Serial.println("TABATA");
+    lv_bar_set_range(Progress_bar, 00, get_target(TC::TIME) * 10);
+    lv_label_set_text_fmt(Target_Label, "%d s", get_target(TC::TIME));
+  }
+  
+  lv_bar_set_value(Progress_bar, 0, LV_ANIM_OFF);
+  lv_obj_add_flag(get_UI_value_object(UI::circle), LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(get_UI_value_object(UI::countdown), LV_OBJ_FLAG_HIDDEN);
 
 }
 
@@ -346,21 +366,15 @@ void lv_load_mainmenu(bool deleteold)
   int TargetDist = get_target(TC::DIST);
   int TargetRounds = get_target(TC::ROUNDS);
   int TargetRoundTime = get_target(TC::TIME);
+  int TargetRestTime = get_target(TC::REST_TIME);
 
-  // lv_slider_set_value(targetCals_FT, TargetCals, LV_ANIM_OFF);
-  // lv_slider_set_value(targetCals_EMOM, TargetCals, LV_ANIM_OFF);
-  // lv_slider_set_value(targetDist_FT, TargetDist / 250, LV_ANIM_OFF);
-  // lv_slider_set_value(targetDist_EMOM, TargetDist / 250, LV_ANIM_OFF);
-  // lv_slider_set_value(targetRnds_EMOM, TargetRounds, LV_ANIM_OFF);
-  // lv_slider_set_value(targetRndTime_EMOM, TargetRoundTime / 30, LV_ANIM_OFF);
+
   lv_screen_load_anim(scr_mainmenu, LV_SCR_LOAD_ANIM_FADE_IN, 100, 0, deleteold);
 };
 
 
 void lv_load_countdown() {
-  Serial.println("try");
    lv_screen_load_anim(scr_countdown,LV_SCR_LOAD_ANIM_FADE_ON,100,0,false);
-  Serial.println("did");
   }
 
 
@@ -380,6 +394,7 @@ void btn_mode_cb(lv_event_t *e) {
       lv_obj_add_flag(SpinCals, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(SpinDist, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(SpinTime, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(SpinRestTime, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(SpinRnds, LV_OBJ_FLAG_HIDDEN);
       set_bike_mode(TC::JUST_RIDE);
         break;      
@@ -388,6 +403,7 @@ void btn_mode_cb(lv_event_t *e) {
       lv_obj_remove_flag(SpinCals, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(SpinDist, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(SpinTime, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(SpinRestTime, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(SpinRnds, LV_OBJ_FLAG_HIDDEN);
       set_bike_mode(TC::RFT);
         break;
@@ -396,14 +412,25 @@ void btn_mode_cb(lv_event_t *e) {
       lv_obj_remove_flag(SpinCals, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(SpinDist, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(SpinTime, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(SpinRestTime, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(SpinRnds, LV_OBJ_FLAG_HIDDEN);
       set_bike_mode(TC::EMOM);
         break;      
       case 3: 
-      lv_obj_remove_flag(btnmTargetType, LV_OBJ_FLAG_HIDDEN);
-      lv_obj_remove_flag(SpinCals, LV_OBJ_FLAG_HIDDEN);
-      lv_obj_remove_flag(SpinDist, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(btnmTargetType, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(SpinCals, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(SpinDist, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(SpinTime, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(SpinRestTime, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(SpinRnds, LV_OBJ_FLAG_HIDDEN);
+      set_bike_mode(TC::TABATA);
+        break;      
+      case 4: 
+      lv_obj_remove_flag(btnmTargetType, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(SpinCals, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(SpinDist, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(SpinTime, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(SpinRestTime, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(SpinRnds, LV_OBJ_FLAG_HIDDEN);
       set_bike_mode(TC::DEATH_BY);
         break;
@@ -445,9 +472,10 @@ void button_go_cb(lv_event_t *e)
   set_target(TC::DIST, lv_spinbox_get_value(lv_obj_get_child(SpinDist,1)));
   set_target(TC::TIME, lv_spinbox_get_value(lv_obj_get_child(SpinTime,1)));
   set_target(TC::ROUNDS, lv_spinbox_get_value(lv_obj_get_child(SpinRnds,1)));
+  set_target(TC::REST_TIME, lv_spinbox_get_value(lv_obj_get_child(SpinRestTime,1)));
   update_round(1,lv_spinbox_get_value(lv_obj_get_child(SpinRnds,1)));
   lv_load_timer();
-//  start_running();
+  start_running();
 }
 
 void button_stop_cb(lv_event_t *e)

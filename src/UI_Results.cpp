@@ -14,9 +14,18 @@ void button_reset_cb(lv_event_t * e)
 }
 
 void add_results_row(int round, double metres, float cals, long seconds) {
-    Serial.printf("Adding Row: %d %0.f %1.f %d \n",round,metres,cals,seconds);
     char buf[16]; 
-    int  row =lv_table_get_row_count(table);
+    int  row =round;
+    Serial.printf("Adding Row %d: %d %0.f %1.f %d \n",row, round,metres,cals,seconds);
+
+    Serial.printf("table has %d rows\n", lv_table_get_row_cnt(table));
+    if (lv_table_get_row_cnt(table) <= row) {
+        // Add a new row if it doesn't exist
+        lv_table_set_row_cnt(table, row + 1);
+        Serial.printf("Adding new row %d\n", row+1);
+        Serial.printf("table now has %d rows\n", lv_table_get_row_cnt(table));
+    }
+
 
     sprintf(buf, "%d", round);
     lv_table_set_cell_value(table, row , 0, buf); 
@@ -33,8 +42,8 @@ void add_results_row(int round, double metres, float cals, long seconds) {
     int ss = (seconds - 60*60*hh) - 60*mm;
 
     sprintf(buf, "%02d:%02d:%02d",hh,mm,ss);
-    Serial.println(buf);
     lv_table_set_cell_value(table, row , 3, buf);
+    Serial.printf("table has %d rows, %s rounds, %s m\n", lv_table_get_row_cnt(table), lv_table_get_cell_value(table, round, 0), lv_table_get_cell_value(table, round, 1));
 }
 
 void load_results_screen() { lv_screen_load_anim(scr_Results,LV_SCR_LOAD_ANIM_FADE_ON,100,0,false);};
@@ -62,6 +71,7 @@ void lv_create_Results()
   lv_table_set_cell_value(table, 0, 3, headers[3]);
 
   
+    lv_table_set_row_cnt(table, get_target(TC::ROUNDS) + 1); // +1 for header row
   // RESET BUTTON
   
   lv_obj_t * button_stop = lv_button_create(scr_Results);
