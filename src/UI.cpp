@@ -202,6 +202,15 @@ void lv_create_timer()
   lv_obj_remove_flag(Round, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_add_style(Round, &style_tsp, 0);
 
+  lv_obj_t *circle_obj = lv_label_create(scr_timer);
+    lv_obj_set_style_radius(circle_obj, LV_RADIUS_CIRCLE, LV_STATE_DEFAULT);
+    lv_obj_set_size(circle_obj, 30, 30);
+    lv_obj_set_style_bg_color(circle_obj, lv_color_make(65,150,82), LV_STATE_DEFAULT); // RGB for green
+    lv_obj_set_style_border_width(circle_obj, 0, LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(circle_obj, 0, LV_STATE_DEFAULT);
+    lv_obj_align(circle_obj, LV_ALIGN_TOP_RIGHT, -10, 10);
+    lv_obj_add_flag(circle_obj, LV_OBJ_FLAG_HIDDEN);
+
   lv_obj_t *Round_Label = create_label(Round, -5, -10, "Round:", &lv_font_montserrat_24);
   lv_obj_t *Round_Value = create_label(Round, 145, -10, "1 of ?", &lv_font_montserrat_24);
 
@@ -217,16 +226,22 @@ void lv_create_timer()
   lv_obj_t *Cals_Label = create_label(scr_timer, 10, 110, "Calories:", &lv_font_montserrat_24);
   lv_obj_t *Cals_Value = create_label(scr_timer, 160, 110, "0 KCal", &lv_font_montserrat_24);
 
+  lv_obj_t *Speed_Label = create_label(scr_timer, 10, 135, "/1km:", &lv_font_montserrat_24);
+  lv_obj_t *Speed_Value = create_label(scr_timer, 160, 135, "00:00:00", &lv_font_montserrat_24);
+  
   set_UI_value_object(UI::ROUND, Round);
   set_UI_value_object(UI::CALS, Cals_Value);
   set_UI_value_object(UI::DIST, Dist_Value);
   set_UI_value_object(UI::TIME, Time_Value);
   set_UI_value_object(UI::RPM, RPM_Value);
+  set_UI_value_object(UI::speed_val, Speed_Value);
+  set_UI_value_object(UI::speed_lbl, Speed_Label);
+  set_UI_value_object(UI::circle,circle_obj);
 
   // PROGRESS BAR
 
   lv_obj_t *PB = lv_obj_create(scr_timer);
-  lv_obj_align_to(PB, scr_timer, LV_ALIGN_TOP_LEFT, 0, 145);
+  lv_obj_align_to(PB, scr_timer, LV_ALIGN_TOP_LEFT, 0, 160);
   lv_obj_set_size(PB, 320, 32);
   lv_obj_remove_flag(PB, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_add_style(PB, &style_tsp, 0);
@@ -308,6 +323,7 @@ void lv_load_timer()
     Serial.println("CALS");
     lv_bar_set_range(Progress_bar, 00, get_target(TC::CALS) * 10);
     lv_label_set_text_fmt(Target_Label, "%d KCals", get_target(TC::CALS));
+    lv_label_set_text_fmt(get_UI_value_object(UI::speed_lbl),"Cals/min:");
     break;
   }
   case TC::DIST:
@@ -315,6 +331,7 @@ void lv_load_timer()
     Serial.println("DIST");
     lv_bar_set_range(Progress_bar, 00, get_target(TC::DIST));
     lv_label_set_text_fmt(Target_Label, "%d m", get_target(TC::DIST));
+    lv_label_set_text_fmt(get_UI_value_object(UI::speed_lbl),"/ 1km:");
     break;
   }
   }
@@ -428,8 +445,9 @@ void button_go_cb(lv_event_t *e)
   set_target(TC::DIST, lv_spinbox_get_value(lv_obj_get_child(SpinDist,1)));
   set_target(TC::TIME, lv_spinbox_get_value(lv_obj_get_child(SpinTime,1)));
   set_target(TC::ROUNDS, lv_spinbox_get_value(lv_obj_get_child(SpinRnds,1)));
+  update_round(1,lv_spinbox_get_value(lv_obj_get_child(SpinRnds,1)));
   lv_load_timer();
-  start_running();
+//  start_running();
 }
 
 void button_stop_cb(lv_event_t *e)

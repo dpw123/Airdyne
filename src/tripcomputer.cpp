@@ -11,14 +11,16 @@ static int  TargetDist = 250;
 static int  TargetCals = 15;
 static int  TargetRounds = 3;
 static int  TargetRoundTime = 60;
+static int  TargetRestTime = 180;
 static int  countdownPeriod_s = 10;
 
 static TC::TIMER_DATA Target_type = TC::CALS ;
 static TC::BIKE_MODE Bike_mode = TC::JUST_RIDE ;
-static bool RUNNING = false;
+static bool CLOCK_RUNNING = false;
 static bool WORKING = false;
 static bool COUNTING = false;
 static bool INITIAL_CONTACT = false;
+static bool TC_ACTIVE = false;
 
 static long total_time_millis=0;
 static long start_time_millis=0;
@@ -38,23 +40,26 @@ long TC_seconds_work;
 
 
 bool is_running(void) {
-  return RUNNING;
+  return CLOCK_RUNNING;
 }
 
 bool is_working(void) {
   return WORKING;
 }
+
 void start_running() {
-    RUNNING = true;
+    // CLOCK_RUNNING = true;
     // WORKING = false;
     lv_create_Results();
     roundCount = 0;
-    new_round();
+    TC_ACTIVE = true;
+    Serial.println("Starting active trip computer");
+   // new_round();
 }
 
 void stop_running() {
-    RUNNING = false;
-    // WORKING = false;
+    CLOCK_RUNNING = false;
+    WORKING = false;
 }
 
 void new_round() {
@@ -67,39 +72,38 @@ void new_round() {
     TC_seconds_work=0;
     
     roundCount += 1;
+    Serial.printf("New round %d\n", roundCount);
     if (Bike_mode==TC::DEATH_BY) {
         TargetCals = roundCount;
         update_pb_target (TargetCals,10, TC::TARGET_CALS);
     }
     
     last_seconds = 0;
-
-    if ( (bm==TC::EMOM || bm==TC::DEATH_BY) ) {
-        start_time_millis = millis(); // move to set when WORKING begins!
-        WORKING=true;
-        Serial.println("Started WORKING");
-    }
+    start_time_millis = millis();
 
     update_time(TC_seconds_round);
     update_dist(TC_metres);
     update_cals(TC_Cals);
     update_round(roundCount,TargetRounds);
 
-    Serial.println("started Running");
 
     INITIAL_CONTACT = ( digitalRead(reed) == LOW );
+    lv_obj_add_flag(get_UI_value_object(UI::circle), LV_OBJ_FLAG_HIDDEN);
 }
 
 
 void run_timer()
 {
-   if (RUNNING && WORKING) {
+   if (CLOCK_RUNNING) {
     TC_seconds_round= ( millis()-start_time_millis ) / 1000;
     if (TC_seconds_round>last_seconds) {
         last_seconds=TC_seconds_round;
         update_time(TC_seconds_round);
+        check_progress();
     }
    }   
+
+
    if (COUNTING) {
     
     int CD_seconds_round= ( millis()-countdown_start_time_millis ) / 1000;
@@ -107,10 +111,10 @@ void run_timer()
     if (CD_left != countdown_last_Seconds) {
         countdown_last_Seconds = CD_left;
         update_countdown(CD_left);
-        if (CD_left==0) {  // cpuntdown finished
+        if (CD_left==0) {  // countdown finished
             Serial.println("countdown done");
             COUNTING=false;
-            if (get_bike_mode()==TC::RFT) {
+            if (get_bike_mode()==TC::RFT || get_bike_mode()==TC::TABATA) {
                 new_round();
                 update_rpm(0);
                 lv_load_timer();
@@ -123,60 +127,114 @@ void run_timer()
 }
 
 void check_progress() {
+    if (!TC_ACTIVE) {
+        Serial.println("Trip computer not active, skipping progress check.");
+        return;
+    }
 
   TC::BIKE_MODE bm = get_bike_mode();
+
    if (INITIAL_CONTACT) {
     INITIAL_CONTACT = false;
     return;
    }
 
-  if (bm==TC::RFT && WORKING==false && COUNTING==false) {  // for FT workouts, start the timer when you start to pedal
-        Serial.println("Started WORKING");
-        start_time_millis = millis(); 
+    if (CLOCK_RUNNING==false && COUNTING==false)
+     {  // start the timer when you start to pedal
         WORKING=true;
+        CLOCK_RUNNING = true;
+        if (roundCount==0) {
+            new_round();
+            lv_create_Results();
+        }
   }
 
 
-  if (bm==TC::RFT || bm==TC::EMOM || bm==TC::DEATH_BY ) {
 
     //has distance or cals target been met?
-    if (WORKING && ((TC_metres>=TargetDist && get_target_type()==TC::DIST) || (TC_Cals>=TargetCals && get_target_type()==TC::CALS) ) ) {
+
+    if (WORKING && (bm==TC::RFT || bm==TC::EMOM || bm==TC::DEATH_BY ) && ((TC_metres>=TargetDist && get_target_type()==TC::DIST) || (TC_Cals>=TargetCals && get_target_type()==TC::CALS) ) ) {
       TC_seconds_work = TC_seconds_round;
       add_results_row(roundCount,TC_metres, TC_Cals, TC_seconds_work);
+
       WORKING=false;
+      CLOCK_RUNNING=(bm==TC::EMOM || bm==TC::DEATH_BY );  // keep running for EMOM or Death By, stop for RFT
+
+      //have all rounds been done
+      if ((bm==TC::RFT || bm==TC::EMOM) && roundCount==TargetRounds )  {
+        stop_running();
+        roundCount = 0;
+        load_results_screen();
+        TC_ACTIVE = false;
+        return;
+      }
 
       //enter FT countdown?
       if (bm==TC::RFT && COUNTING==false) {
         COUNTING = true;
         countdown_start_time_millis = millis();
+        
+        countdownPeriod_s = 10;
         countdown_last_Seconds = countdownPeriod_s;
         Serial.println("Started countdown");
+        stop_running();
         lv_load_countdown();
         update_countdown(countdown_last_Seconds);
       }
 
-      //have all rounds been done
-      if ((bm==TC::RFT || bm==TC::EMOM) && roundCount==TargetRounds )  {
-        RUNNING=false;
-        load_results_screen();
-      }
-      else {
-        WORKING=false;
-      }
+
     }   
 
-    //has round time been met?
-    if ((bm==TC::EMOM || bm==TC::DEATH_BY) && TC_seconds_round==TargetRoundTime) {
+
+  //3 seconds left
+  if ((bm==TC::EMOM || bm==TC::DEATH_BY || bm==TC::TABATA ) && ( TC_seconds_round>TargetRoundTime-4 )) lv_obj_clear_flag(get_UI_value_object(UI::circle), LV_OBJ_FLAG_HIDDEN);
+
+      //has round time been met?
+    if ((bm==TC::EMOM || bm==TC::DEATH_BY ) && (TC_seconds_round==TargetRoundTime || TC_seconds_round>TargetRoundTime )) {
         if (WORKING)  {
             add_results_row(roundCount,TC_metres, TC_Cals, TC_seconds_round);
+            
             if (bm==TC::DEATH_BY) {
-                RUNNING=false;
+                CLOCK_RUNNING=false;
+                stop_running();
+                roundCount = 0;
+                TC_ACTIVE = false;
                 load_results_screen();
+                return;
             }
         }
         new_round();
+        WORKING = true;
     }
-  }
+
+    //has round time been met?
+    
+    if (WORKING && ((bm==TC::TABATA)  && TC_seconds_round==TargetRoundTime || TC_seconds_round>TargetRoundTime )) {
+        add_results_row(roundCount,TC_metres, TC_Cals, TC_seconds_round);
+
+        WORKING=false;
+        CLOCK_RUNNING=false;
+
+        if ( roundCount==TargetRounds )  {
+            stop_running();
+            roundCount = 0;
+            TC_ACTIVE = false;
+            Serial.println("Trip computer finished, loading results screen.");
+            load_results_screen();
+            return;
+        }
+
+        COUNTING = true;
+        countdown_start_time_millis = millis();
+        countdownPeriod_s = get_target(TC::REST_TIME);
+        countdown_last_Seconds = countdownPeriod_s;
+        Serial.printf("Started countdown %d",countdownPeriod_s);
+        stop_running();
+        lv_load_countdown();
+        update_countdown(countdown_last_Seconds);
+    }
+    
+
 }
 
 void add_metres(double metrestoadd) { 
@@ -219,6 +277,9 @@ int get_target(TC::TIMER_DATA target ) {
         case TC::ROUNDS: {
             return TargetRounds;
             break;}
+        case TC::REST_TIME: {
+            return TargetRestTime;
+            break;}
         default:
             return 0;
     }
@@ -232,15 +293,19 @@ void set_target(TC::TIMER_DATA target, int value) {
             break;} 
         case TC::DIST: {
              TargetDist = value;
-            Serial.printf("Target Dist set to: %d \n", value);
+            Serial.printf("Target Dist set to: %d m \n", value);
             break;}
         case TC::TIME: {
              TargetRoundTime = value;
-            Serial.printf("Target Dist set to: %d \n", value);
+            Serial.printf("Target Time set to: %d s \n", value);
             break;}        
         case TC::ROUNDS: {
              TargetRounds = value;
-            Serial.printf("Target Dist set to: %d \n", value);
+            Serial.printf("Target Rounds set to: %d \n", value);
+            break;}    
+        case TC::REST_TIME: {
+             TargetRestTime = value;
+            Serial.printf("Target Rest set to: %d \n", value);
             break;}
     }
 }

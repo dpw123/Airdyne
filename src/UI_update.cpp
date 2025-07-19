@@ -9,7 +9,9 @@ static lv_obj_t * Cals_Value;
 static lv_obj_t * Progress_bar;
 static lv_obj_t * running_btn;
 static lv_obj_t * lbl_countdown;
-
+static lv_obj_t * lbl_speed;
+static lv_obj_t * lbl_speed_val;
+static lv_obj_t * lbl_circle;
 
 void update_time( long seconds) {
   int hh = seconds / 60 / 60;
@@ -24,6 +26,21 @@ void update_button_label(char new_text[30]) {
 }
 
 void update_rpm( float rpm) { lv_label_set_text_fmt(  get_UI_value_object(UI::RPM) , "%3.1f ",rpm ); }
+
+void update_speed(int secs_per_1k, float cals_per_min) {
+    switch (get_target_type()) {
+        case TC::CALS:
+            lv_label_set_text_fmt(get_UI_value_object(UI::speed_val),"%3.1f" , cals_per_min );
+            break;
+        case TC::DIST:
+        
+            int hh = secs_per_1k / 60 / 60;
+            int mm = (secs_per_1k - 60*60*hh) / 60;
+            int ss = (secs_per_1k - 60*60*hh) - 60*mm;
+            lv_label_set_text_fmt(get_UI_value_object(UI::speed_val),"%02d:%02d:%02d",hh,mm,ss );
+            break;
+    }
+}
 
 void update_dist( double metres) {
     lv_label_set_text_fmt(  get_UI_value_object(UI::DIST) , "%.0f m",metres );
@@ -77,6 +94,15 @@ void set_UI_value_object(UI::OBJECT target_label, lv_obj_t * label_object){
             break;}        
         case UI::countdown: {
             lbl_countdown = label_object ;
+            break;}    
+        case UI::speed_lbl: {
+            lbl_speed = label_object ;
+            break;}    
+        case UI::speed_val: {
+            lbl_speed_val = label_object ;
+            break;}
+        case UI::circle: {
+            lbl_circle = label_object ;
             break;}
     }
 
@@ -104,6 +130,15 @@ lv_obj_t * get_UI_value_object(UI::OBJECT target_label){
             break;}
         case UI::countdown: {
             return lbl_countdown ;
+            break;}
+        case UI::speed_lbl: {
+            return lbl_speed ;
+            break;}
+        case UI::speed_val: {
+            return lbl_speed_val ;
+            break;}
+        case UI::circle: {
+            return lbl_circle ;
             break;}
         default:
             return NULL;

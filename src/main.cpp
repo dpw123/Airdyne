@@ -49,7 +49,7 @@ void loop() {
   lv_tick_inc(5);     // tell LVGL how much time has passed
   delay(5);           // let this time pass
   
-  if (is_running() ) {
+  // if (is_running() ) {
     run_timer();       // in tripcomputer
     reedval = digitalRead(reed);
     
@@ -68,8 +68,15 @@ void loop() {
           
           update_rpm(rpm);
           add_metres(8.045);
-          add_calories( max(0.0, timer / 1000.0 * ((0.00000005073 * rpm * rpm * rpm) + (0.00008806 * rpm * rpm) + (-0.00043782 * rpm))) );
+          int seconds_per_1k = (timer / 8.045);
 
+          float calories = max(0.0, timer / 1000.0 * ((0.00000005073 * rpm * rpm * rpm) + (0.00008806 * rpm * rpm) + (-0.00043782 * rpm)));
+          add_calories( calories );
+
+
+          float calories_per_min = calories/timer*1000*60;
+          
+          update_speed(seconds_per_1k,calories_per_min);
           check_progress();  // in tripcomputer
 
           inuse = true;
@@ -82,12 +89,13 @@ void loop() {
       if (inuse) {
         if (millis() - last_millis > 3000) {
           update_rpm(0.0);
+          update_speed(0,0.0);
           inuse = false;
         }
       }
     }
 
 
-  }
+ // }
 
 }
