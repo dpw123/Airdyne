@@ -49,8 +49,8 @@ struct Round {
 bool is_running(void);
 bool is_working(void);
 
-TC::TIMER_DATA get_target_type();
-void set_target_type(TC::TIMER_DATA);
+TC::TARGET_TYPE get_target_type();
+void set_target_type(TC::TARGET_TYPE);
 
 int get_target(TC::TIMER_DATA target );
 void set_target(TC::TIMER_DATA target, int value);

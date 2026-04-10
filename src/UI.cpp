@@ -150,11 +150,11 @@ void lv_create_MainMenu_2(void)
    int tp = 28;
    int ht = 35;
    int gp = 8;
-  SpinCals = create_spinbox(scr_mainmenu,"", 10, tp+2*(ht+gp),3,TargetCals);
-  SpinDist = create_spinbox(scr_mainmenu,"", 10, tp+3*(ht+gp),5,TargetDist);
-  SpinTime = create_spinbox(scr_mainmenu,"Time (s)", 10, tp+1*(ht+gp),3,TargetRoundTime);
-  SpinRestTime = create_spinbox(scr_mainmenu,"Rest (s)", 10, tp+2*(ht+gp),3,TargetRestTime);  // overlaps with target distance, only used for tabata
-  SpinRnds = create_spinbox(scr_mainmenu,"Rounds", 10, tp+0*(ht+gp),2,TargetRounds);
+   snprintf(buf, sizeof(buf), "%s", "");   SpinCals = create_spinbox(scr_mainmenu,buf, 10, tp+2*(ht+gp),3,TargetCals);
+   snprintf(buf, sizeof(buf), "%s", "");   SpinDist = create_spinbox(scr_mainmenu,buf, 10, tp+3*(ht+gp),5,TargetDist);
+   snprintf(buf, sizeof(buf), "%s", "Time (s)");   SpinTime = create_spinbox(scr_mainmenu,buf, 10, tp+1*(ht+gp),3,TargetRoundTime);
+   snprintf(buf, sizeof(buf), "%s", "Rest (s)");   SpinRestTime = create_spinbox(scr_mainmenu,buf, 10, tp+2*(ht+gp),3,TargetRestTime);  // overlaps with target distance, only used for tabata
+   snprintf(buf, sizeof(buf), "%s", "Rounds");   SpinRnds = create_spinbox(scr_mainmenu,buf, 10, tp+0*(ht+gp),2,TargetRounds);
   
   lv_obj_add_flag(SpinCals, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(SpinDist, LV_OBJ_FLAG_HIDDEN);
@@ -283,6 +283,7 @@ void lv_create_countdown()
     lv_obj_t * lbl_countdown = lv_label_create(scr_countdown);
     lv_label_set_text(lbl_countdown, "XX");
     lv_obj_align(lbl_countdown, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_text_font(lbl_countdown, &lv_font_montserrat_48, 0);
 
     set_UI_value_object(UI::countdown, lbl_countdown);
 

@@ -46,12 +46,14 @@ void update_speed(int secs_per_1k, float cals_per_min) {
 
 void update_dist( double metres) {
     lv_label_set_text_fmt(  get_UI_value_object(UI::DIST) , "%.0f m",metres );
-    if ((get_bike_mode()==TC::RFT ||get_bike_mode()==TC::EMOM||get_bike_mode()==TC::DEATH_BY)  && get_target_type()==TC::TARGET_DIST)         lv_bar_set_value(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ), (int32_t)metres, LV_ANIM_OFF);
+    if ((get_bike_mode()==TC::RFT ||get_bike_mode()==TC::EMOM||get_bike_mode()==TC::DEATH_BY)  && get_target_type()==TC::TARGET_DIST)        
+          lv_bar_set_value(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ), (int32_t)metres, LV_ANIM_OFF);
 }
 
 void update_cals( float cals) {
     lv_label_set_text_fmt(  get_UI_value_object(UI::CALS) , "%.1f KCal",cals );
-    if ((get_bike_mode()==TC::RFT ||get_bike_mode()==TC::EMOM||get_bike_mode()==TC::DEATH_BY)  && get_target_type()==TC::TARGET_CALS)        lv_bar_set_value(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ), (int32_t)(cals*10), LV_ANIM_OFF);
+    if ((get_bike_mode()==TC::RFT ||get_bike_mode()==TC::EMOM||get_bike_mode()==TC::DEATH_BY)  && get_target_type()==TC::TARGET_CALS)
+          lv_bar_set_value(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ), (int32_t)(cals*10), LV_ANIM_OFF);
 }
 
 void update_round(int rc, int tr) {

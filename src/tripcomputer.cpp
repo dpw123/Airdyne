@@ -14,7 +14,7 @@ static int  TargetRoundTime = 60;
 static int  TargetRestTime = 180;
 static int  countdownPeriod_s = 10;
 
-static TC::TIMER_DATA Target_type = TC::TARGET_CALS ;
+static TC::TARGET_TYPE Target_type = TC::TARGET_CALS ;
 static TC::BIKE_MODE Bike_mode = TC::JUST_RIDE ;
 static bool CLOCK_RUNNING = false;
 static bool WORKING = false;
@@ -79,7 +79,7 @@ void new_round() {
     }
     
     last_seconds = 0;
-    start_time_millis = millis();
+    // start_time_millis = millis(); // DO THIS LATER WHEN PEDALING BEGINS, NOT HERE
 
     update_time(TC_seconds_round);
     update_dist(TC_metres);
@@ -143,13 +143,12 @@ void check_progress() {
      {  // start the timer when you start to pedal
         WORKING=true;
         CLOCK_RUNNING = true;
+        start_time_millis = millis();
         if (roundCount==0) {
             new_round();
             lv_create_Results();
         }
   }
-
-
 
     //has distance or cals target been met?
 
@@ -310,11 +309,11 @@ void set_target(TC::TIMER_DATA target, int value) {
     }
 }
 
-TC::TIMER_DATA get_target_type() {
+TC::TARGET_TYPE get_target_type() {
     return Target_type;
 };
 
-void set_target_type(TC::TIMER_DATA TT) {
+void set_target_type(TC::TARGET_TYPE TT) {
     Target_type = TT;
     Serial.printf("Target Type set to: %d \n", TT);
 };
