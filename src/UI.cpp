@@ -328,7 +328,7 @@ void lv_load_timer()
   if (bm != TC::TABATA) {
   switch (get_target_type())
   {
-  case TC::CALS:
+  case TC::TARGET_CALS:
   {
     Serial.println("CALS");
     lv_bar_set_range(Progress_bar, 00, get_target(TC::CALS) * 10);
@@ -336,7 +336,7 @@ void lv_load_timer()
     lv_label_set_text_fmt(get_UI_value_object(UI::speed_lbl),"Cals/min:");
     break;
   }
-  case TC::DIST:
+  case TC::TARGET_DIST:
   {
     Serial.println("DIST");
     lv_bar_set_range(Progress_bar, 00, get_target(TC::DIST));
@@ -461,10 +461,10 @@ void button_go_cb(lv_event_t *e)
   Serial.print("\nGo pressed\n");
   switch (lv_buttonmatrix_get_selected_button(btnmTargetType)) {
     case 0: 
-      set_target_type(TC::CALS);
+      set_target_type(TC::TARGET_CALS);
       break;
     case 1:
-      set_target_type(TC::DIST);
+      set_target_type(TC::TARGET_DIST);
       break;
   }
 

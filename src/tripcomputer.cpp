@@ -14,7 +14,7 @@ static int  TargetRoundTime = 60;
 static int  TargetRestTime = 180;
 static int  countdownPeriod_s = 10;
 
-static TC::TIMER_DATA Target_type = TC::CALS ;
+static TC::TIMER_DATA Target_type = TC::TARGET_CALS ;
 static TC::BIKE_MODE Bike_mode = TC::JUST_RIDE ;
 static bool CLOCK_RUNNING = false;
 static bool WORKING = false;
@@ -132,7 +132,7 @@ void check_progress() {
         return;
     }
 
-  TC::BIKE_MODE bm = get_bike_mode();
+    TC::BIKE_MODE bm = get_bike_mode();
 
    if (INITIAL_CONTACT) {
     INITIAL_CONTACT = false;
@@ -153,7 +153,7 @@ void check_progress() {
 
     //has distance or cals target been met?
 
-    if (WORKING && (bm==TC::RFT || bm==TC::EMOM || bm==TC::DEATH_BY ) && ((TC_metres>=TargetDist && get_target_type()==TC::DIST) || (TC_Cals>=TargetCals && get_target_type()==TC::CALS) ) ) {
+    if (WORKING && (bm==TC::RFT || bm==TC::EMOM || bm==TC::DEATH_BY ) && ((TC_metres>=TargetDist && get_target_type()==TC::TARGET_DIST) || (TC_Cals>=TargetCals && get_target_type()==TC::TARGET_CALS) ) ) {
       TC_seconds_work = TC_seconds_round;
       add_results_row(roundCount,TC_metres, TC_Cals, TC_seconds_work);
 
@@ -209,7 +209,7 @@ void check_progress() {
 
     //has round time been met?
     
-    if (WORKING && ((bm==TC::TABATA)  && TC_seconds_round==TargetRoundTime || TC_seconds_round>TargetRoundTime )) {
+    if (WORKING && ((bm==TC::TABATA)  && TC_seconds_round>=TargetRoundTime  )) {
         add_results_row(roundCount,TC_metres, TC_Cals, TC_seconds_round);
 
         WORKING=false;

@@ -31,10 +31,10 @@ void update_rpm( float rpm) { lv_label_set_text_fmt(  get_UI_value_object(UI::RP
 
 void update_speed(int secs_per_1k, float cals_per_min) {
     switch (get_target_type()) {
-        case TC::CALS:
+        case TC::TARGET_CALS:
             lv_label_set_text_fmt(get_UI_value_object(UI::speed_val),"%3.1f" , cals_per_min );
             break;
-        case TC::DIST:
+        case TC::TARGET_DIST:
         
             int hh = secs_per_1k / 60 / 60;
             int mm = (secs_per_1k - 60*60*hh) / 60;
@@ -46,12 +46,12 @@ void update_speed(int secs_per_1k, float cals_per_min) {
 
 void update_dist( double metres) {
     lv_label_set_text_fmt(  get_UI_value_object(UI::DIST) , "%.0f m",metres );
-    if ((get_bike_mode()==TC::RFT ||get_bike_mode()==TC::EMOM||get_bike_mode()==TC::DEATH_BY)  && get_target_type()==TC::DIST)         lv_bar_set_value(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ), (int32_t)metres, LV_ANIM_OFF);
+    if ((get_bike_mode()==TC::RFT ||get_bike_mode()==TC::EMOM||get_bike_mode()==TC::DEATH_BY)  && get_target_type()==TC::TARGET_DIST)         lv_bar_set_value(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ), (int32_t)metres, LV_ANIM_OFF);
 }
 
 void update_cals( float cals) {
     lv_label_set_text_fmt(  get_UI_value_object(UI::CALS) , "%.1f KCal",cals );
-    if ((get_bike_mode()==TC::RFT ||get_bike_mode()==TC::EMOM||get_bike_mode()==TC::DEATH_BY)  && get_target_type()==TC::CALS)        lv_bar_set_value(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ), (int32_t)(cals*10), LV_ANIM_OFF);
+    if ((get_bike_mode()==TC::RFT ||get_bike_mode()==TC::EMOM||get_bike_mode()==TC::DEATH_BY)  && get_target_type()==TC::TARGET_CALS)        lv_bar_set_value(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ), (int32_t)(cals*10), LV_ANIM_OFF);
 }
 
 void update_round(int rc, int tr) {
@@ -67,10 +67,10 @@ void update_countdown(int secs) {
 void update_pb_target(int target, int divisor, TC::TARGET_TYPE target_type) {
     lv_bar_set_range(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_bar_class ),0,target*divisor);
     switch (target_type) {
-        case TC::CALS:
+        case TC::TARGET_CALS:
             lv_label_set_text_fmt(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_label_class ),"%d KCal",target );
             break;
-        case TC::DIST:
+        case TC::TARGET_DIST:
             lv_label_set_text_fmt(lv_obj_get_child_by_type(get_UI_value_object(UI::ProgBar),0,&lv_label_class ),"%d m",target );
             break;
     }
